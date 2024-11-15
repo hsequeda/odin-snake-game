@@ -29,26 +29,33 @@ move_snake :: proc(s: ^Snake, does_eat: bool) {
 	switch {
 	case s.head.x + 1 >= BOARD_WIDTH:
 		s.dir = Vec2{0, 0}
+		return
 	case s.head.x <= 0:
 		s.dir = Vec2{0, 0}
-	case s.head.y + 1 >= BOARD_WIDTH:
+		return
+	case s.head.y + 1 >= BOARD_HEIGHT:
 		s.dir = Vec2{0, 0}
+		return
 	case s.head.y <= 0:
 		s.dir = Vec2{0, 0}
+		return
+	case slice.any_of(s.body[:], s.head + s.dir):
+		s.dir = Vec2{0, 0}
+		return
 	}
 
-	old_pos := s.head
-	n_pos := old_pos
+
+	n_pos := s.body[len(s.body) - 1]
+	#reverse for &t, i in s.body {
+		if i > 0 {
+			t = s.body[i - 1]
+		} else {
+			t = s.head
+		}
+	}
+
 	s.head += s.dir
-	for &t in s.body {
-		n_pos = t
-		t = old_pos
-		old_pos = n_pos
-	}
-
-	if does_eat {
-		append(&s.body, n_pos)
-	}
+	if does_eat {append(&s.body, n_pos)}
 }
 
 set_snake_dir :: proc(s: ^Snake, dir: Vec2) {

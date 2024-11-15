@@ -156,6 +156,9 @@ draw_snake :: proc(g: ^Game) {
 
 clean_game :: proc(g: ^Game) {
 	destroy_snake(&g.snake)
+	sdl.DestroyWindow(g.window)
+	sdl.DestroyRenderer(g.renderer)
+
 	sdl.Quit()
 }
 
