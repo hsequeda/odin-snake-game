@@ -15,7 +15,7 @@ BOARD_WIDTH :: 20
 BOARD_HEIGHT :: 20
 TILE_SIZE :: 16
 
-TICK_RATE :: 0.13
+TICK_RATE :: 0.3
 tick_timer: f32 = TICK_RATE
 
 
@@ -51,7 +51,7 @@ initialize :: proc(g: ^Game) -> bool {
 	}
 
 	g.snake = init_snake(Vec2{(BOARD_WIDTH / 2), (BOARD_WIDTH / 2)}, sdl.Color{50, 0, 30, 255})
-    g.apple = init_apple(get_busy_tiles(g.snake)[:])
+	g.apple = init_apple(get_busy_tiles(g.snake))
 
 	return true
 }
@@ -70,17 +70,17 @@ run :: proc(g: ^Game) {
 
 		tick_timer -= f32(delta_time(g)) / 1000
 		if tick_timer <= 0 {
-            if g.snake.head == g.apple {
-			    move_snake(&g.snake, true)
-                g.apple = init_apple(get_busy_tiles(g.snake)[:])
-            }else {
-			    move_snake(&g.snake, false)
-            }
+			if g.snake.head == g.apple {
+				move_snake(&g.snake, true)
+				g.apple = init_apple(get_busy_tiles(g.snake))
+			} else {
+				move_snake(&g.snake, false)
+			}
 
 			tick_timer += TICK_RATE
 		}
 
-        draw_apple(g)
+		draw_apple(g)
 		draw_snake(g)
 
 		sdl.RenderPresent(g.renderer)
@@ -101,13 +101,13 @@ handle_events :: proc(g: ^Game) -> bool {
 			case .ESCAPE:
 				return true
 			case .UP:
-				change_snake_dir(&g.snake, Vec2{0, -1})
+				set_snake_dir(&g.snake, Vec2{0, -1})
 			case .LEFT:
-				change_snake_dir(&g.snake, Vec2{-1, 0})
+				set_snake_dir(&g.snake, Vec2{-1, 0})
 			case .RIGHT:
-				change_snake_dir(&g.snake, Vec2{1, 0})
+				set_snake_dir(&g.snake, Vec2{1, 0})
 			case .DOWN:
-				change_snake_dir(&g.snake, Vec2{0, 1})
+				set_snake_dir(&g.snake, Vec2{0, 1})
 			}
 		}
 	}
@@ -115,16 +115,11 @@ handle_events :: proc(g: ^Game) -> bool {
 	return false
 }
 
-draw_apple :: proc (g: ^Game) {
-	sdl.SetRenderDrawColor( g.renderer, 255, 0, 0, 255)
+draw_apple :: proc(g: ^Game) {
+	sdl.SetRenderDrawColor(g.renderer, 255, 0, 0, 255)
 	sdl.RenderFillRectF(
 		g.renderer,
-		&sdl.FRect {
-			f32(g.apple.x) * TILE_SIZE,
-			f32(g.apple.y) * TILE_SIZE,
-			TILE_SIZE,
-			TILE_SIZE,
-		},
+		&sdl.FRect{f32(g.apple.x) * TILE_SIZE, f32(g.apple.y) * TILE_SIZE, TILE_SIZE, TILE_SIZE},
 	)
 }
 
@@ -156,10 +151,14 @@ draw_snake :: proc(g: ^Game) {
 			g.renderer,
 			&sdl.FRect{f32(t.x) * TILE_SIZE, f32(t.y) * TILE_SIZE, TILE_SIZE, TILE_SIZE},
 		)
-
 	}
-
 }
+
+clean_game :: proc(g: ^Game) {
+	destroy_snake(&g.snake)
+	sdl.Quit()
+}
+
 
 init_apple :: proc(busy_tiles: []Vec2) -> Vec2 {
 

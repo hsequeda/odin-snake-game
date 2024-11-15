@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:slice"
 import sdl "vendor:sdl2"
 
 
@@ -14,7 +15,7 @@ Snake :: struct {
 
 init_snake :: proc(initial_pos: Vec2, color: sdl.Color) -> Snake {
 	s := Snake {
-		dir   = Vec2{1, 0},
+		dir   = Vec2{1, 0}, // Right (->)
 		color = color,
 		head  = initial_pos,
 	}
@@ -50,19 +51,24 @@ move_snake :: proc(s: ^Snake, does_eat: bool) {
 	}
 }
 
-change_snake_dir :: proc(s: ^Snake, dir: Vec2) {
+set_snake_dir :: proc(s: ^Snake, dir: Vec2) {
 	if s.dir != dir * -1 {
 		s.dir = dir
 	}
 }
 
 
-get_busy_tiles :: proc(s: Snake) -> [dynamic]Vec2 {
-	bt: [dynamic]Vec2
-	append(&bt, s.head)
-	for t in s.body {
-		append(&bt, t)
+// get_busy_tiles returns the tiles occupied by the Snake.
+get_busy_tiles :: proc(s: Snake) -> []Vec2 {
+	tb := make([]Vec2, len(s.body) + 1)
+	tb[0] = s.head
+	for t, i in s.body {
+		tb[i + 1] = t
 	}
 
-	return bt
+	return tb
+}
+
+destroy_snake :: proc(s: ^Snake) {
+	delete(s.body)
 }
