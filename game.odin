@@ -15,7 +15,7 @@ BOARD_WIDTH :: 20
 BOARD_HEIGHT :: 20
 TILE_SIZE :: 16
 
-TICK_RATE :: 0.3
+TICK_RATE :: 0.2
 tick_timer: f32 = TICK_RATE
 
 
@@ -51,7 +51,7 @@ initialize :: proc(g: ^Game) -> bool {
 	}
 
 	g.snake = init_snake(Vec2{(BOARD_WIDTH / 2), (BOARD_WIDTH / 2)}, sdl.Color{50, 0, 30, 255})
-	g.apple = init_apple(get_busy_tiles(g.snake))
+	g.apple = init_apple(get_snake_tiles(g.snake))
 
 	return true
 }
@@ -60,30 +60,19 @@ run :: proc(g: ^Game) {
 	for {
 		if handle_events(g) {return}
 
-		// Set the draw color to a light gray for the background
-		// load the renderer with Grey color
-		sdl.SetRenderDrawColor(g.renderer, 30, 150, 30, 255)
-		// Clear renderer (doc => https://wiki.libsdl.org/SDL2/SDL_RenderClear)
-		// This function clear the background with the drawing color
-		sdl.RenderClear(g.renderer)
-
 
 		tick_timer -= f32(delta_time(g)) / 1000
 		if tick_timer <= 0 {
 			if g.snake.head == g.apple {
 				move_snake(&g.snake, true)
-				g.apple = init_apple(get_busy_tiles(g.snake))
+				// draw a new apple in a tile not occupied by the snake
+				g.apple = init_apple(get_snake_tiles(g.snake))
 			} else {
 				move_snake(&g.snake, false)
 			}
-
 			tick_timer += TICK_RATE
+			draw(g)
 		}
-
-		draw_apple(g)
-		draw_snake(g)
-
-		sdl.RenderPresent(g.renderer)
 	}
 }
 
@@ -113,6 +102,20 @@ handle_events :: proc(g: ^Game) -> bool {
 	}
 
 	return false
+}
+
+draw :: proc(g: ^Game) {
+	// Set the draw color to a light gray for the background
+	// load the renderer with Grey color
+	sdl.SetRenderDrawColor(g.renderer, 30, 150, 30, 255)
+	// Clear renderer (doc => https://wiki.libsdl.org/SDL2/SDL_RenderClear)
+	// This function clear the background with the drawing color
+	sdl.RenderClear(g.renderer)
+
+	draw_apple(g)
+	draw_snake(g)
+
+	sdl.RenderPresent(g.renderer)
 }
 
 draw_apple :: proc(g: ^Game) {
