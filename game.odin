@@ -1,7 +1,6 @@
 package main
 
 import "core:fmt"
-import "core:math/rand"
 import sdl "vendor:sdl2"
 
 SDL_FLAGS :: sdl.INIT_EVERYTHING
@@ -15,7 +14,7 @@ BOARD_WIDTH :: 20
 BOARD_HEIGHT :: 20
 TILE_SIZE :: 16
 
-TICK_RATE :: 0.2
+TICK_RATE :: 0.1
 tick_timer: f32 = TICK_RATE
 
 
@@ -23,7 +22,7 @@ Game :: struct {
 	window:           ^sdl.Window,
 	renderer:         ^sdl.Renderer,
 	snake:            Snake,
-	apple:            Vec2,
+	apple:            Apple,
 
 	// prev_frame_ticks is the number of ms since the sdl.Initialization to previous frame.
 	prev_frame_ticks: u32,
@@ -163,21 +162,4 @@ clean_game :: proc(g: ^Game) {
 	sdl.DestroyRenderer(g.renderer)
 
 	sdl.Quit()
-}
-
-
-init_apple :: proc(busy_tiles: []Vec2) -> Vec2 {
-
-	is_apple_used := proc(a: Vec2, bt: []Vec2) -> bool {
-		for bt in bt {
-			if a == bt {return true}
-		}
-		return false
-	}
-	for {
-		apple := Vec2{rand.int31_max(BOARD_WIDTH), rand.int31_max(BOARD_HEIGHT)}
-		if !is_apple_used(apple, busy_tiles) {
-			return apple
-		}
-	}
 }
