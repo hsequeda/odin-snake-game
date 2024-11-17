@@ -1,7 +1,9 @@
 package main
 
 import "core:fmt"
+import "core:strings"
 import sdl "vendor:sdl2"
+import "vendor:sdl2/ttf"
 
 SDL_FLAGS :: sdl.INIT_EVERYTHING
 WINDOW_FLAGS :: sdl.WINDOW_SHOWN
@@ -14,15 +16,20 @@ BOARD_WIDTH :: 20
 BOARD_HEIGHT :: 20
 TILE_SIZE :: 16
 
-TICK_RATE :: 0.9
+FONT_SIZE :: 20
+
+TICK_RATE :: 0.16
 tick_timer: f32 = TICK_RATE
 
 
 Game :: struct {
+	font:             ^ttf.Font,
 	window:           ^sdl.Window,
 	renderer:         ^sdl.Renderer,
 	snake:            Snake,
 	apple:            Apple,
+	score_tex:        ^sdl.Texture,
+	score:            u32,
 
 	// prev_frame_ticks is the number of ms since the sdl.Initialization to previous frame.
 	prev_frame_ticks: u32,
@@ -30,9 +37,12 @@ Game :: struct {
 
 
 initialize :: proc(g: ^Game) -> bool {
-	if sdl.Init(SDL_FLAGS) != 0 {
-		return false
-	}
+	if sdl.Init(SDL_FLAGS) != 0 {return false}
+	if ttf.Init() != 0 {return false}
+
+	// Load font
+	g.font = ttf.OpenFont("./fonts/freesansbold.ttf", FONT_SIZE)
+	// ttf.CloseFont(g.font)
 
 	if g.window = sdl.CreateWindow(
 		WINDOW_TITLE,
@@ -63,8 +73,9 @@ run :: proc(g: ^Game) {
 		if tick_timer <= 0 {
 			snake_move(&g.snake)
 			if g.snake.head == g.apple {
-                snake_grow(&g.snake)
+				snake_grow(&g.snake)
 				g.apple = init_apple(get_snake_tiles(g.snake))
+				g.score += 1
 			}
 
 			tick_timer += TICK_RATE
@@ -76,6 +87,7 @@ run :: proc(g: ^Game) {
 
 // TODO: improve it, handle events should handle the events, it shouldn't return anything
 // The closing event should be handled in a different way.
+@(private = "file")
 handle_events :: proc(g: ^Game) -> bool {
 	event: sdl.Event
 	for sdl.PollEvent(&event) {
@@ -101,6 +113,7 @@ handle_events :: proc(g: ^Game) -> bool {
 	return false
 }
 
+@(private = "file")
 draw :: proc(g: ^Game) {
 	// Set the draw color to a light gray for the background
 	// load the renderer with Grey color
@@ -109,12 +122,14 @@ draw :: proc(g: ^Game) {
 	// This function clear the background with the drawing color
 	sdl.RenderClear(g.renderer)
 
+	draw_hud(g)
 	draw_apple(g)
 	draw_snake(g)
 
 	sdl.RenderPresent(g.renderer)
 }
 
+@(private = "file")
 draw_apple :: proc(g: ^Game) {
 	sdl.SetRenderDrawColor(g.renderer, 255, 0, 0, 255)
 	sdl.RenderFillRectF(
@@ -123,6 +138,7 @@ draw_apple :: proc(g: ^Game) {
 	)
 }
 
+@(private = "file")
 draw_snake :: proc(g: ^Game) {
 	sdl.SetRenderDrawColor(
 		g.renderer,
@@ -154,11 +170,35 @@ draw_snake :: proc(g: ^Game) {
 	}
 }
 
+// draw_hud draws the HUD (Heads-Up Display) on the screen.
+@(private = "file")
+draw_hud :: proc(g: ^Game) {
+	if g.score_tex != nil {sdl.DestroyTexture(g.score_tex)}
+
+	surf := ttf.RenderText_Blended(
+		g.font,
+		strings.clone_to_cstring(fmt.tprintf("Score: %d", g.score)),
+		sdl.Color{0, 0, 0, 0},
+	)
+	g.score_tex = sdl.CreateTextureFromSurface(g.renderer, surf)
+	sdl.FreeSurface(surf)
+	sdl.RenderCopy(
+		g.renderer,
+		g.score_tex,
+		nil,
+		&sdl.Rect{x = ((BOARD_WIDTH * TILE_SIZE) - surf.w) / 2, w = surf.w, h = surf.h},
+	)
+}
+
 // game_clean ends all the initialized processes and deallocate used memory.
 game_clean :: proc(g: ^Game) {
 	snake_destroy(&g.snake)
+
+	if g.score_tex != nil {sdl.DestroyTexture(g.score_tex)}
 	sdl.DestroyWindow(g.window)
 	sdl.DestroyRenderer(g.renderer)
 
+	ttf.CloseFont(g.font)
+	ttf.Quit()
 	sdl.Quit()
 }
