@@ -14,7 +14,7 @@ BOARD_WIDTH :: 20
 BOARD_HEIGHT :: 20
 TILE_SIZE :: 16
 
-TICK_RATE :: 0.1
+TICK_RATE :: 0.9
 tick_timer: f32 = TICK_RATE
 
 
@@ -59,16 +59,14 @@ run :: proc(g: ^Game) {
 	for {
 		if handle_events(g) {return}
 
-
 		tick_timer -= f32(delta_time(g)) / 1000
 		if tick_timer <= 0 {
+			snake_move(&g.snake)
 			if g.snake.head == g.apple {
-				move_snake(&g.snake, true)
-				// draw a new apple in a tile not occupied by the snake
+                snake_grow(&g.snake)
 				g.apple = init_apple(get_snake_tiles(g.snake))
-			} else {
-				move_snake(&g.snake, false)
 			}
+
 			tick_timer += TICK_RATE
 			draw(g)
 		}
@@ -89,13 +87,13 @@ handle_events :: proc(g: ^Game) -> bool {
 			case .ESCAPE:
 				return true
 			case .UP:
-				set_snake_dir(&g.snake, Vec2{0, -1})
+				snake_set_dir(&g.snake, Vec2{0, -1})
 			case .LEFT:
-				set_snake_dir(&g.snake, Vec2{-1, 0})
+				snake_set_dir(&g.snake, Vec2{-1, 0})
 			case .RIGHT:
-				set_snake_dir(&g.snake, Vec2{1, 0})
+				snake_set_dir(&g.snake, Vec2{1, 0})
 			case .DOWN:
-				set_snake_dir(&g.snake, Vec2{0, 1})
+				snake_set_dir(&g.snake, Vec2{0, 1})
 			}
 		}
 	}
@@ -156,8 +154,9 @@ draw_snake :: proc(g: ^Game) {
 	}
 }
 
-clean_game :: proc(g: ^Game) {
-	destroy_snake(&g.snake)
+// game_clean ends all the initialized processes and deallocate used memory.
+game_clean :: proc(g: ^Game) {
+	snake_destroy(&g.snake)
 	sdl.DestroyWindow(g.window)
 	sdl.DestroyRenderer(g.renderer)
 

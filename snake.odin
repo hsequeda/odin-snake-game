@@ -9,6 +9,7 @@ Snake :: struct {
 	color:         sdl.Color,
 	head:          Vec2,
 	body:          [dynamic]Vec2,
+	growing_tile:  Vec2,
 }
 
 
@@ -34,7 +35,7 @@ get_snake_tiles :: proc(s: Snake) -> []Vec2 {
 	return tb
 }
 
-move_snake :: proc(s: ^Snake, should_grow: bool) {
+snake_move :: proc(s: ^Snake) {
 	s.dir = s.next_dir
 
 	// stop the snake if it collide with the end of the board
@@ -57,7 +58,7 @@ move_snake :: proc(s: ^Snake, should_grow: bool) {
 	}
 
 
-	n_pos := s.body[len(s.body) - 1]
+	s.growing_tile = s.body[len(s.body) - 1]
 	#reverse for &t, i in s.body {
 		if i > 0 {
 			t = s.body[i - 1]
@@ -67,15 +68,18 @@ move_snake :: proc(s: ^Snake, should_grow: bool) {
 	}
 
 	s.head += s.dir
-	if should_grow {append(&s.body, n_pos)}
 }
 
-set_snake_dir :: proc(s: ^Snake, ndir: Vec2) {
+snake_grow :: proc(s: ^Snake) {
+	append(&s.body, s.growing_tile)
+}
+
+snake_set_dir :: proc(s: ^Snake, ndir: Vec2) {
 	if s.dir != ndir * -1 {
 		s.next_dir = ndir
 	}
 }
 
-destroy_snake :: proc(s: ^Snake) {
+snake_destroy :: proc(s: ^Snake) {
 	delete(s.body)
 }

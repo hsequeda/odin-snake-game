@@ -8,6 +8,6 @@ main :: proc() {
 		fmt.eprintln("error initializing")
 	}
 
-	defer clean_game(&game)
+	defer game_clean(&game)
 	run(&game)
 }
