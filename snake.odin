@@ -80,6 +80,36 @@ snake_set_dir :: proc(s: ^Snake, ndir: Vec2) {
 	}
 }
 
+snake_stop :: proc(s: ^Snake) {
+	s.dir = Vec2{0, 0}
+}
+
+snake_render :: proc(s: ^Snake, r: ^sdl.Renderer) {
+	sdl.SetRenderDrawColor(r, s.color.r, s.color.g, s.color.b, s.color.a)
+
+
+	// Draw head
+	sdl.RenderFillRectF(
+		r,
+		&sdl.FRect {
+			f32(s.head.x) * TILE_SIZE,
+			f32(s.head.y) * TILE_SIZE,
+			TILE_SIZE - 2,
+			TILE_SIZE - 2,
+		},
+	)
+
+
+	// Draw body
+	for t in s.body {
+		sdl.RenderFillRectF(
+			r,
+			&sdl.FRect{f32(t.x) * TILE_SIZE, f32(t.y) * TILE_SIZE, TILE_SIZE - 2, TILE_SIZE - 2},
+		)
+	}
+
+}
+
 snake_destroy :: proc(s: ^Snake) {
 	delete(s.body)
 }
